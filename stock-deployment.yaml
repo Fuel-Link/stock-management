@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: C:\ProgramData\chocolatey\lib\kubernetes-kompose\tools\kompose.exe convert
+    kompose.version: 1.33.0 (3ce457399)
+  labels:
+    io.kompose.service: stock
+  name: stock
+  namespace: egs-fuellink
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: stock
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: C:\ProgramData\chocolatey\lib\kubernetes-kompose\tools\kompose.exe convert
+        kompose.version: 1.33.0 (3ce457399)
+      labels:
+        io.kompose.network/stock-management-default: "true"
+        io.kompose.service: stock
+    spec:
+      containers:
+        - env:
+            - name: FLASK_APP
+              value: app.py
+            - name: FLASK_RUN_HOST
+              value: 0.0.0.0
+          image: registry.deti/egs-fuellink/stock:v1
+          name: stock
+          ports:
+            - containerPort: 5000
+              hostPort: 50126
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /app
+              name: stock-cm0
+            - mountPath: /app/data
+              name: stock-db
+      restartPolicy: Always
+      volumes:
+        - configMap:
+            name: stock-cm0
+          name: stock-cm0
+        - name: stock-db
+          persistentVolumeClaim:
+            claimName: stock-db
